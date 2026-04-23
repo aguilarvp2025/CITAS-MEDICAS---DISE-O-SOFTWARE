@@ -55,10 +55,10 @@ public class Paciente {
     
     
     public void agendar(int medicoId, int horarioId, String fecha) {
-        // 1. Buscamos el ID real del paciente (esto ya funcionaba bien)
+        
         String sqlId = "SELECT id FROM paciente WHERE usuario_id = ?";
         
-        // 2. Query corregido: Agregamos horario_id a las columnas y un ? más
+        
         String sqlCita = "INSERT INTO cita (paciente_id, medico_id, horario_id, fecha, estado) VALUES (?, ?, ?, ?, 'Programada')";
 
         try (Connection con = Conexion.obtener()) {
@@ -71,11 +71,11 @@ public class Paciente {
                 }
             }
 
-            // 3. Ejecutar el insert con los 4 parámetros
+          
             try (PreparedStatement ps2 = con.prepareStatement(sqlCita)) {
                 ps2.setInt(1, idRealPaciente);
                 ps2.setInt(2, medicoId);
-                ps2.setInt(3, horarioId); // <--- El dato que faltaba
+                ps2.setInt(3, horarioId);
                 ps2.setString(4, fecha);
                 ps2.executeUpdate();
                 System.out.println("¡Cita agendada con éxito para el paciente!");
