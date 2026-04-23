@@ -4,10 +4,29 @@
  */
 package mx.itson.sistemacm.Citas;
 
+import java.util.List;
+import mx.itson.sistemacm.Medicos.Medico;
+
 /**
  *
  * @author capri
  */
 public class Horario {
+    
+    public String dia;
+    public String horaInicio;
+    public String horaFin;
+    public boolean estado;
+    public Medico medico;
+    public List<Cita> citas;
+    
+    public void marcarDisponible() {
+
+    }
+    
+    public void marcarNoDisponible() {
+        
+    }
+    
     
 }

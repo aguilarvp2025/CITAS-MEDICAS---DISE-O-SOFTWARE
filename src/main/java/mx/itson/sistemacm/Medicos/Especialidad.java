@@ -4,10 +4,20 @@
  */
 package mx.itson.sistemacm.Medicos;
 
+import java.util.List;
+
 /**
  *
  * @author capri
  */
 public class Especialidad {
     
+    public int id;
+    public String nombre;
+    public String descripcion;
+    public List<Medico> medicos;
+    
+    public void asignar(){
+        
+    }
 }
