@@ -1,11 +1,16 @@
 package mx.itson.sistema.UI;
 
 import java.util.Scanner;
-import mx.itson.sistemacm.Pacientes.Usuario;
-import mx.itson.sistemacm.Pacientes.Paciente;
-import mx.itson.sistemacm.Medicos.Medico;
+import java.util.List;
+import mx.itson.sistemacm.Dao.*;
+import mx.itson.sistemacm.Modelos.*;
 
 public class Main {
+    
+    private static final UsuarioDAO usuarioDAO = new UsuarioDAO();
+    private static final PacienteDAO pacienteDAO = new PacienteDAO();
+    private static final MedicoDAO medicoDAO = new MedicoDAO();
+    private static final CitaDAO citaDAO = new CitaDAO();
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -18,20 +23,19 @@ public class Main {
             System.out.println("3. Iniciar Sesión");
             System.out.println("4. Salir");
             System.out.print("Seleccione una opción: ");
-            
-        
+
             if (!sc.hasNextInt()) {
                 System.out.println("Por favor, ingrese un número.");
                 sc.next();
                 continue;
             }
-            
+
             int op = sc.nextInt();
             sc.nextLine(); 
 
             switch (op) {
                 case 1: registrar(sc, "PACIENTE"); break;
-                case 2: registrar(sc, "MEDICO"); break;
+                case 2: registrar(sc, "MEDICO"); break; // Nota: Implementar lógica en UsuarioDAO si es necesario
                 case 3: login(sc); break;
                 case 4: salir = true; break;
                 default: System.out.println("Opción no válida.");
@@ -40,51 +44,55 @@ public class Main {
     }
 
     private static void registrar(Scanner sc, String rol) {
-        Usuario u = new Usuario();
-        System.out.println("\n--- REGISTRO DE " + rol + " ---");
-        System.out.print("Nombre completo: ");
-        String nombre = sc.nextLine();
-        System.out.print("Teléfono: ");
-        String tel = sc.nextLine();
-        System.out.print("Password: ");
-        String pass = sc.nextLine();
+    System.out.println("\n--- REGISTRO DE " + rol + " ---");
+    System.out.print("Nombre de usuario (Teléfono): ");
+    String user = sc.nextLine();
+    System.out.print("Password: ");
+    String pass = sc.nextLine();
+    System.out.print("Nombre completo para el perfil: ");
+    String nombreReal = sc.nextLine();
 
-        int edad = 0;
-        int especialidadId = 0;
+    boolean exito = false;
 
-      
-        if (rol.equals("PACIENTE")) {
-            System.out.print("Edad: ");
-            edad = sc.nextInt();
-            sc.nextLine();
-        } else {
-            System.out.print("ID de Especialidad: ");
-            especialidadId = sc.nextInt();
-            sc.nextLine();
+    if (rol.equals("PACIENTE")) {
+        System.out.print("Edad: ");
+        int edad = sc.nextInt();
+        sc.nextLine();
+        exito = usuarioDAO.registrarPaciente(user, pass, nombreReal, edad);
+    } else {
+        // Mostramos las especialidades que tienes en la base de datos
+        System.out.println("Especialidades disponibles:");
+        EspecialidadDAO espDAO = new EspecialidadDAO();
+        for (Especialidad e : espDAO.obtenerTodas()) {
+            System.out.println(e.getId() + ". " + e.getNombre());
         }
-
-      
-        if (u.registrar(nombre, tel, pass, rol, especialidadId, edad)) {
-            System.out.println("¡Registro exitoso!");
-        } else {
-            System.out.println("Error al registrar. Verifique los datos o si el teléfono ya existe.");
-        }
+        
+        System.out.print("Seleccione el ID de su Especialidad: ");
+        int espId = sc.nextInt();
+        sc.nextLine();
+        exito = usuarioDAO.registrarMedico(user, pass, nombreReal, espId);
     }
 
+    if (exito) {
+        System.out.println("¡Registro exitoso!");
+    } else {
+        System.out.println("Error al registrar. Verifique si el teléfono ya está registrado.");
+    }
+}
+
     private static void login(Scanner sc) {
-        Usuario u = new Usuario();
-        System.out.print("\nTeléfono: ");
-        String tel = sc.nextLine();
+        System.out.print("\nUsuario (Teléfono): ");
+        String user = sc.nextLine();
         System.out.print("Password: ");
         String pass = sc.nextLine();
 
-        if (u.iniciarSesion(tel, pass)) {
-            System.out.println("\nLogin correcto. Bienvenido.");
-            
-            // Validamos contra el nombre exacto de la base de datos (mayúsculas)
-            if (u.getRol().equalsIgnoreCase("PACIENTE")) {
+        Usuario u = usuarioDAO.login(user, pass);
+
+        if (u != null) {
+            System.out.println("\nLogin correcto. Bienvenido, " + u.getNombreUsuario());
+            if (u.getRol().equalsIgnoreCase("Paciente")) {
                 menuPaciente(sc, u);
-            } else if (u.getRol().equalsIgnoreCase("MEDICO")) {
+            } else if (u.getRol().equalsIgnoreCase("Medico")) {
                 menuMedico(sc, u);
             }
         } else {
@@ -93,45 +101,44 @@ public class Main {
     }
 
     private static void menuPaciente(Scanner sc, Usuario u) {
-        Paciente p = new Paciente();
-        p.id = u.getId(); 
         boolean volver = false;
-
         while (!volver) {
-            System.out.println("\n--- MENÚ PACIENTE ---");
+            System.out.println("\n--- MENU PACIENTE ---");
             System.out.println("1. Agendar Cita");
             System.out.println("2. Ver mis Citas");
-            System.out.println("3. Cerrar Sesión");
+            System.out.println("3. Cerrar Sesion");
             System.out.print("Opción: ");
             int op = sc.nextInt();
             sc.nextLine();
 
             switch (op) {
                 case 1:
-                    System.out.print("Escribe el ID del Médico: ");
+                    System.out.print("ID del Médico: ");
                     int idM = sc.nextInt();
-                    System.out.print("Escribe el ID del Horario: ");
+                    System.out.print("ID del Horario: ");
                     int idH = sc.nextInt();
                     sc.nextLine();
-                    p.agendar(idM, idH, "2026-05-15 09:00:00");
+                    // Usamos la fecha actual o pedimos una
+                    if (pacienteDAO.agendar(u.getId(), idM, idH, "2026-05-15")) {
+                        System.out.println("Cita agendada correctamente.");
+                    }
                     break;
                 case 2:
-                    p.consultarCita();
+                    List<Cita> citas = pacienteDAO.consultarCitas(u.getId());
+                    for (Cita c : citas) {
+                        System.out.println("ID: " + c.getId() + " | Fecha: " + c.getFecha() + 
+                                         " | Médico: " + c.getNombreMedico() + " | Estado: " + c.getEstado());
+                    }
                     break;
-                case 3:
-                    volver = true;
-                    break;
+                case 3: volver = true; break;
             }
         }
     }
 
     private static void menuMedico(Scanner sc, Usuario u) {
-        Medico m = new Medico();
-        m.id = u.getId(); 
         boolean volver = false;
-
         while (!volver) {
-            System.out.println("\n--- MENÚ MÉDICO ---");
+            System.out.println("\n--- MENU MEDICO ---");
             System.out.println("1. Ver Agenda");
             System.out.println("2. Atender Paciente (Finalizar Cita)");
             System.out.println("3. Cerrar Sesión");
@@ -141,17 +148,23 @@ public class Main {
 
             switch (op) {
                 case 1:
-                    m.consultarCita();
+                    List<Cita> agenda = medicoDAO.verAgenda(u.getId());
+                    for (Cita c : agenda) {
+                        System.out.println("ID: " + c.getId() + " | Fecha: " + c.getFecha() + 
+                                         " | Paciente: " + c.getNombrePaciente());
+                    }
                     break;
                 case 2:
                     System.out.print("Ingrese el ID de la cita a finalizar: ");
                     int idC = sc.nextInt();
                     sc.nextLine();
-                    m.atenderPaciente(idC);
+                    if (citaDAO.finalizarCita(idC, u.getId())) {
+                        System.out.println("Cita finalizada con éxito.");
+                    } else {
+                        System.out.println("Error al finalizar la cita.");
+                    }
                     break;
-                case 3:
-                    volver = true;
-                    break;
+                case 3: volver = true; break;
             }
         }
     }
