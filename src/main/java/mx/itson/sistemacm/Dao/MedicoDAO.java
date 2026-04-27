@@ -21,7 +21,6 @@ public class MedicoDAO {
     public List<Cita> verAgenda(int usuarioId) {
         List<Cita> agenda = new ArrayList<>();
         
-        // Query para traer las citas junto con el nombre del paciente
         String sql = "SELECT c.id, c.fecha, c.estado, p.nombre as nombre_paciente " +
                      "FROM cita c " +
                      "INNER JOIN paciente p ON c.paciente_id = p.id " +
